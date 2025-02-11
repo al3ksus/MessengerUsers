@@ -5,7 +5,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"usr/internal/app"
+
+	"github.com/al3ksus/messengerusers/internal/config"
+
+	"github.com/al3ksus/messengerusers/internal/app"
 
 	_ "github.com/lib/pq"
 )
@@ -17,6 +20,7 @@ type User struct {
 }
 
 func main() {
+	cfg := config.MustLoad()
 	// psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 	// 	"password=%s dbname=%s sslmode=disable",
 	// 	"localhost", 5432, "postgres", "7554", "messenger")
@@ -31,15 +35,15 @@ func main() {
 	// 	panic(err)
 	// }
 
-	application := app.New(log.Default(), 8080)
-	go application.GrpcServer.Run()
+	application := app.New(log.Default(), cfg.GRPCPort)
+	go application.GRPCServer.Run()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
 	<-stop
 
-	application.GrpcServer.Stop()
+	application.GRPCServer.Stop()
 
 	log.Print("app stopped")
 	// fmt.Println("Successfully connected!")

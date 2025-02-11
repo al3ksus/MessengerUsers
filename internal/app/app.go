@@ -2,17 +2,18 @@ package app
 
 import (
 	"log"
-	"usr/internal/app/grpcapp"
+
+	"github.com/al3ksus/messengerusers/internal/app/grpcapp"
 )
 
 type App struct {
-	GrpcServer *grpcapp.App
+	GRPCServer *grpcapp.GRPCServer
 }
 
 func New(log *log.Logger, port int) *App {
 	grpcApp := grpcapp.New(log, port)
 
 	return &App{
-		GrpcServer: grpcApp,
+		GRPCServer: grpcApp,
 	}
 }

@@ -4,35 +4,36 @@ import (
 	"fmt"
 	"log"
 	"net"
-	usersgrpc "usr/internal/grpc/users"
+
+	usersgrpc "github.com/al3ksus/messengerusers/internal/grpc/users"
 
 	"google.golang.org/grpc"
 )
 
-type App struct {
+type GRPCServer struct {
 	log        *log.Logger
 	grpcServer *grpc.Server
 	port       int
 }
 
-func New(log *log.Logger, port int) *App {
+func New(log *log.Logger, port int) *GRPCServer {
 	grpcServer := grpc.NewServer()
 	usersgrpc.Register(grpcServer)
-	return &App{
+	return &GRPCServer{
 		log:        log,
 		grpcServer: grpcServer,
 		port:       port,
 	}
 }
 
-func (a *App) MustRun() {
+func (a *GRPCServer) MustRun() {
 	err := a.Run()
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (a *App) Run() error {
+func (a *GRPCServer) Run() error {
 	log.Print("starting grpc server")
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
@@ -49,7 +50,7 @@ func (a *App) Run() error {
 	return nil
 }
 
-func (a *App) Stop() {
+func (a *GRPCServer) Stop() {
 	const op = "grpcapp.Stop"
 
 	a.log.Printf("stopping grpc server. op: %s, port:%d", op, a.port)
