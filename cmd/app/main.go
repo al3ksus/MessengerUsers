@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/al3ksus/messengerusers/internal/config"
+	"go.uber.org/zap"
 
 	"github.com/al3ksus/messengerusers/internal/app"
 
@@ -21,21 +22,14 @@ type User struct {
 
 func main() {
 	cfg := config.MustLoad()
-	// psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-	// 	"password=%s dbname=%s sslmode=disable",
-	// 	"localhost", 5432, "postgres", "7554", "messenger")
-	// db, err := sql.Open("postgres", psqlInfo)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer db.Close()
+	logger := setupLogger()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			log.Print(err.Error())
+		}
+	}()
 
-	// err = db.Ping()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	application := app.New(log.Default(), cfg.GRPCPort)
+	application := app.New(logger, cfg.GRPCPort, cfg.DBPort, cfg.Host, cfg.User, cfg.Password, cfg.DBName)
 	go application.GRPCServer.Run()
 
 	stop := make(chan os.Signal, 1)
@@ -44,7 +38,16 @@ func main() {
 	<-stop
 
 	application.GRPCServer.Stop()
+	application.PSQLConn.Close()
 
-	log.Print("app stopped")
-	// fmt.Println("Successfully connected!")
+	logger.Info("app stopped")
+}
+
+func setupLogger() *zap.SugaredLogger {
+	l, err := zap.NewDevelopment()
+	if err != nil {
+		panic("error setup looger. " + err.Error())
+	}
+
+	return l.Sugar()
 }

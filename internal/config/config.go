@@ -2,9 +2,11 @@ package config
 
 import (
 	"flag"
+	"log"
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -47,5 +49,16 @@ func fetchConfigPath() string {
 
 	flag.StringVar(&res, "config", "", "path to config file")
 
+	if res == "" {
+		dotenvInit()
+		res = os.Getenv("CONFIG_PATH")
+	}
+
 	return res
+}
+
+func dotenvInit() {
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
 }
