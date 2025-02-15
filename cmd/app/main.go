@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/al3ksus/messengerusers/internal/config"
+	"github.com/al3ksus/messengerusers/internal/repositories/psql"
 	"go.uber.org/zap"
 
 	"github.com/al3ksus/messengerusers/internal/app"
@@ -29,7 +31,14 @@ func main() {
 		}
 	}()
 
-	application := app.New(logger, cfg.GRPCPort, cfg.DBPort, cfg.Host, cfg.User, cfg.Password, cfg.DBName)
+	db, err := psql.Connect(fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.DBPort, cfg.User, cfg.Password, cfg.DBName))
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	application := app.New(logger, cfg.GRPCPort, db)
 	go application.GRPCServer.Run()
 
 	stop := make(chan os.Signal, 1)
@@ -38,7 +47,6 @@ func main() {
 	<-stop
 
 	application.GRPCServer.Stop()
-	application.PSQLConn.Close()
 
 	logger.Info("app stopped")
 }

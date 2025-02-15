@@ -1,22 +1,25 @@
 package app
 
 import (
+	"database/sql"
+
 	"github.com/al3ksus/messengerusers/internal/app/grpcapp"
-	"github.com/al3ksus/messengerusers/internal/app/psql"
 	"github.com/al3ksus/messengerusers/internal/logger"
+	"github.com/al3ksus/messengerusers/internal/repositories/psql"
+	"github.com/al3ksus/messengerusers/internal/services/users"
 )
 
 type App struct {
 	GRPCServer *grpcapp.GRPCServer
-	PSQLConn   *psql.PSQLConn
 }
 
-func New(log logger.Logger, gRPCPort, dbPort int, dbHost, dbUser, dbPassword, dbName string) *App {
-	grpcApp := grpcapp.New(log, gRPCPort)
-	psqlConn := psql.New(log, dbHost, dbUser, dbPassword, dbName, dbPort)
+func New(log logger.Logger, gRPCPort int, db *sql.DB) *App {
+	rep := psql.New(db)
+
+	users := users.New(log, rep, rep)
+	grpcApp := grpcapp.New(log, gRPCPort, users)
 
 	return &App{
 		GRPCServer: grpcApp,
-		PSQLConn:   psqlConn,
 	}
 }
