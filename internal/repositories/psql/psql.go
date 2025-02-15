@@ -40,19 +40,27 @@ func New(db *sql.DB) *Repository {
 func (r *Repository) SaveUser(ctx context.Context, username string, password []byte) (int64, error) {
 	const op = "repositories.psql.SaveUser"
 
-	res, err := r.db.ExecContext(ctx, "INSERT INTO users (username, password, is_active) VALUES ($1, $2, true)", username, password)
-	if err != nil {
+	var id int64
+	row := r.db.QueryRowContext(ctx,
+		`INSERT INTO users (
+			username, 
+			pass_hash, 
+			is_active
+		) VALUES ($1, $2, true) RETURNING id`,
+		username, password)
+	if err := row.Scan(&id); err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code.Name() == repository.CodeConstraintUnique {
+			// if errors.Is(err, sql.ErrNoRows) {
 			return 0, fmt.Errorf("%s, %w", op, repository.ErrUserAlredyExists)
 		}
 
 		return 0, fmt.Errorf("%s, %w", op, err)
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("%s, %w", op, err)
-	}
+	// id, err := res.LastInsertId()
+	// if err != nil {
+	// 	return 0, fmt.Errorf("%s, %w", op, err)
+	// }
 
 	return id, nil
 }
@@ -63,7 +71,7 @@ func (r *Repository) GetUser(ctx context.Context, username string) (models.User,
 	row := r.db.QueryRowContext(ctx, "SELECT * FROM users WHERE username = $1 AND is_active = true", username)
 
 	var user models.User
-	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash)
+	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.IsActive)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.User{}, fmt.Errorf("%s, %w", op, repository.ErrUserNotFound)

@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS users
 (
-    id INT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
-    pass_hash BYTEA NOT NULL
+    pass_hash BYTEA NOT NULL,
     is_active BOOLEAN
 );
 

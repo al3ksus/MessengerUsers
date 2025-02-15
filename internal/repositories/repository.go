@@ -8,5 +8,5 @@ var (
 )
 
 var (
-	CodeConstraintUnique = "23505"
+	CodeConstraintUnique = "unique_violation"
 )

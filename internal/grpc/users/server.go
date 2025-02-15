@@ -2,8 +2,10 @@ package usersgrpc
 
 import (
 	"context"
+	"errors"
 
 	messengerv1 "github.com/al3ksus/messengerprotos/gen/go"
+	"github.com/al3ksus/messengerusers/internal/services/users"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -14,7 +16,6 @@ type serverAPI struct {
 	users Users
 }
 
-// Тот самый интерфейс, котрый мы передавали в grpcApp
 type Users interface {
 	Login(
 		ctx context.Context,
@@ -42,7 +43,10 @@ func (s *serverAPI) Login(
 
 	id, err := s.users.Login(ctx, in.GetUsername(), in.GetPassword())
 	if err != nil {
-		//TODO: ...
+		if errors.Is(err, users.ErrInvalidCredentials) {
+			return nil, status.Error(codes.InvalidArgument, "invalid credentials")
+		}
+
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
@@ -61,7 +65,11 @@ func (s *serverAPI) Register(
 
 	id, err := s.users.RegisterNewUser(ctx, in.GetUsername(), in.GetPassword())
 	if err != nil {
-		//TODO: ...
+		if errors.Is(err, users.ErrUserAlreadyExists) {
+			return nil, status.Error(codes.AlreadyExists, "username already taken")
+
+		}
+
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
