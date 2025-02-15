@@ -16,9 +16,9 @@ type GRPCServer struct {
 	port       int
 }
 
-func New(log logger.Logger, port int) *GRPCServer {
+func New(log logger.Logger, port int, users usersgrpc.Users) *GRPCServer {
 	grpcServer := grpc.NewServer()
-	usersgrpc.Register(grpcServer)
+	usersgrpc.Register(grpcServer, users)
 	return &GRPCServer{
 		log:        log,
 		grpcServer: grpcServer,
@@ -34,26 +34,25 @@ func (a *GRPCServer) MustRun() {
 }
 
 func (a *GRPCServer) Run() error {
+	const op = "grpcapp.Run"
 	a.log.Infof("starting grpc server")
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 	if err != nil {
-		return fmt.Errorf("%s: %w", "grpcapp.Run", err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	a.log.Infof("grpc server is running. addr=%s", l.Addr().String())
 
 	if err := a.grpcServer.Serve(l); err != nil {
-		return fmt.Errorf("%s: %w", "grpcapp.Run", err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	return nil
 }
 
 func (a *GRPCServer) Stop() {
-	const op = "grpcapp.Stop"
-
-	a.log.Infof("stopping grpc server. op: %s, port:%d", op, a.port)
+	a.log.Infof("stopping grpc server")
 
 	a.grpcServer.GracefulStop()
 }
