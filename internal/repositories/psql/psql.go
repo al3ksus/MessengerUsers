@@ -40,11 +40,9 @@ func New(db *sql.DB) *Repository {
 func (r *Repository) SaveUser(ctx context.Context, username string, password []byte) (int64, error) {
 	const op = "repositories.psql.SaveUser"
 
-	res, err := r.db.ExecContext(ctx, "INSERT INTO users (username, password) VALUES ($1, $2)", username, password)
+	res, err := r.db.ExecContext(ctx, "INSERT INTO users (username, password, is_active) VALUES ($1, $2, true)", username, password)
 	if err != nil {
-		var psqlErr pq.Error
-
-		if errors.As(err, &psqlErr) && psqlErr.Code.Name() == repository.CodeConstraintUnique {
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code.Name() == repository.CodeConstraintUnique {
 			return 0, fmt.Errorf("%s, %w", op, repository.ErrUserAlredyExists)
 		}
 
@@ -62,7 +60,7 @@ func (r *Repository) SaveUser(ctx context.Context, username string, password []b
 func (r *Repository) GetUser(ctx context.Context, username string) (models.User, error) {
 	const op = "repositories.psql.GetUser"
 
-	row := r.db.QueryRowContext(ctx, "SELECT * FROM users WHERE username = $1", username)
+	row := r.db.QueryRowContext(ctx, "SELECT * FROM users WHERE username = $1 AND is_active = true", username)
 
 	var user models.User
 	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash)
