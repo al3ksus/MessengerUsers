@@ -19,6 +19,7 @@ type Users struct {
 
 type UserSaver interface {
 	SaveUser(ctx context.Context, username string, password []byte) (int64, error)
+	SetInactive(ctx context.Context, userId int64) error
 }
 
 type UserProvider interface {
@@ -26,8 +27,9 @@ type UserProvider interface {
 }
 
 var (
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrUserAlreadyExists  = errors.New("user already exists")
+	ErrInvalidCredentials  = errors.New("invalid credentials")
+	ErrUserAlreadyExists   = errors.New("user already exists")
+	ErrUserAlreadyInactive = errors.New("user already inactive")
 )
 
 func New(log logger.Logger, userSaver UserSaver, userProvider UserProvider) *Users {
@@ -81,4 +83,24 @@ func (u *Users) RegisterNewUser(ctx context.Context, username, password string) 
 	}
 
 	return id, nil
+}
+
+func (u *Users) MakeUserInactive(ctx context.Context, userId int64) error {
+	const op = "users.MakeUserInactive"
+
+	if err := u.userSaver.SetInactive(ctx, userId); err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			u.log.Warnf("user not found. %w", err)
+			return fmt.Errorf("%s, %w", op, ErrInvalidCredentials)
+		}
+		if errors.Is(err, repository.ErrUserAlreadyInactive) {
+			u.log.Warnf("user already inactive. %w", err)
+			return fmt.Errorf("%s, %w", op, ErrUserAlreadyInactive)
+		}
+
+		u.log.Errorf("error making user inactive. %w", err)
+		return fmt.Errorf("%s, %w", op, err)
+	}
+
+	return nil
 }

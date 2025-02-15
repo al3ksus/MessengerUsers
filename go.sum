@@ -2,6 +2,10 @@ github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/al3ksus/messengerprotos v0.0.0-20250210205936-a12409664e37 h1:FwUumWA4ozBBse8S9TCn1VDYf3xLMoZMLcXO7t7mmCA=
 github.com/al3ksus/messengerprotos v0.0.0-20250210205936-a12409664e37/go.mod h1:d0/fAZ+lIjAYsvQ0xAv/osUCqoK2HmHCsFFPT8e4VME=
+github.com/al3ksus/messengerprotos v0.0.0-20250215194847-41db12d3d7d5 h1:TDP7tgxnLnOkNyS61nEdjchHNxxb+wURz6nXR1Woziw=
+github.com/al3ksus/messengerprotos v0.0.0-20250215194847-41db12d3d7d5/go.mod h1:rOxIYerS2AKM37kbKyELcIiriAh4F395AXZ2Vrl1Sm8=
+github.com/al3ksus/messengerprotos v0.0.0-20250215204138-c9bc8b13f07e h1:0NPez3h9uSln5kmJMU5c7kW7pt0ESyA8yRoTlOpMnwE=
+github.com/al3ksus/messengerprotos v0.0.0-20250215204138-c9bc8b13f07e/go.mod h1:rOxIYerS2AKM37kbKyELcIiriAh4F395AXZ2Vrl1Sm8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

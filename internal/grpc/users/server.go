@@ -17,26 +17,16 @@ type serverAPI struct {
 }
 
 type Users interface {
-	Login(
-		ctx context.Context,
-		username string,
-		password string,
-	) (id int64, err error)
-	RegisterNewUser(
-		ctx context.Context,
-		username string,
-		password string,
-	) (id int64, err error)
+	Login(ctx context.Context, username string, password string) (id int64, err error)
+	RegisterNewUser(ctx context.Context, username string, password string) (id int64, err error)
+	MakeUserInactive(ctx context.Context, userId int64) error
 }
 
 func Register(gRPCServer *grpc.Server, users Users) {
 	messengerv1.RegisterUsersServer(gRPCServer, &serverAPI{users: users})
 }
 
-func (s *serverAPI) Login(
-	ctx context.Context,
-	in *messengerv1.LoginRequest,
-) (*messengerv1.LoginResponse, error) {
+func (s *serverAPI) Login(ctx context.Context, in *messengerv1.LoginRequest) (*messengerv1.LoginResponse, error) {
 	if err := validate(in.Password, in.Username); err != nil {
 		return nil, err
 	}
@@ -55,10 +45,7 @@ func (s *serverAPI) Login(
 	}, nil
 }
 
-func (s *serverAPI) Register(
-	ctx context.Context,
-	in *messengerv1.RegisterRequest,
-) (*messengerv1.RegisterResponse, error) {
+func (s *serverAPI) Register(ctx context.Context, in *messengerv1.RegisterRequest) (*messengerv1.RegisterResponse, error) {
 	if err := validate(in.Password, in.Username); err != nil {
 		return nil, err
 	}
@@ -76,6 +63,21 @@ func (s *serverAPI) Register(
 	return &messengerv1.RegisterResponse{
 		UserId: id,
 	}, nil
+}
+
+func (s *serverAPI) ToInactive(ctx context.Context, in *messengerv1.ToInactiveRequest) (*messengerv1.Empty, error) {
+	if err := s.users.MakeUserInactive(ctx, in.GetUserId()); err != nil {
+		if errors.Is(err, users.ErrInvalidCredentials) {
+			return nil, status.Error(codes.InvalidArgument, "user not found")
+		}
+		if errors.Is(err, users.ErrUserAlreadyInactive) {
+			return nil, status.Error(codes.AlreadyExists, "user already inactive")
+		}
+
+		return nil, status.Error(codes.Internal, "internal error")
+	}
+
+	return &messengerv1.Empty{}, nil
 }
 
 func validate(password, username string) error {

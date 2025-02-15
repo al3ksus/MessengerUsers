@@ -16,7 +16,7 @@ type Repository struct {
 }
 
 func Connect(conn string) (*sql.DB, error) {
-	const op = "repositories.psql.New"
+	const op = "psql.New"
 
 	db, err := sql.Open("postgres", conn)
 	if err != nil {
@@ -38,7 +38,7 @@ func New(db *sql.DB) *Repository {
 }
 
 func (r *Repository) SaveUser(ctx context.Context, username string, password []byte) (int64, error) {
-	const op = "repositories.psql.SaveUser"
+	const op = "psql.SaveUser"
 
 	var id int64
 	row := r.db.QueryRowContext(ctx,
@@ -50,23 +50,17 @@ func (r *Repository) SaveUser(ctx context.Context, username string, password []b
 		username, password)
 	if err := row.Scan(&id); err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code.Name() == repository.CodeConstraintUnique {
-			// if errors.Is(err, sql.ErrNoRows) {
 			return 0, fmt.Errorf("%s, %w", op, repository.ErrUserAlredyExists)
 		}
 
 		return 0, fmt.Errorf("%s, %w", op, err)
 	}
 
-	// id, err := res.LastInsertId()
-	// if err != nil {
-	// 	return 0, fmt.Errorf("%s, %w", op, err)
-	// }
-
 	return id, nil
 }
 
 func (r *Repository) GetUser(ctx context.Context, username string) (models.User, error) {
-	const op = "repositories.psql.GetUser"
+	const op = "psql.GetUser"
 
 	row := r.db.QueryRowContext(ctx, "SELECT * FROM users WHERE username = $1 AND is_active = true", username)
 
@@ -81,4 +75,41 @@ func (r *Repository) GetUser(ctx context.Context, username string) (models.User,
 	}
 
 	return user, nil
+}
+
+func (r *Repository) SetInactive(ctx context.Context, userId int64) error {
+	const op = "psql.SetInactive"
+
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	if err != nil {
+		return fmt.Errorf("%s, %w", op, err)
+	}
+
+	row := tx.QueryRowContext(ctx, "SELECT * FROM users WHERE id = $1", userId)
+
+	var user models.User
+	err = row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.IsActive)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("%s, %w", op, repository.ErrUserNotFound)
+		}
+
+		return fmt.Errorf("%s, %w", op, err)
+	}
+
+	if !user.IsActive {
+		return fmt.Errorf("%s, %w", op, repository.ErrUserAlreadyInactive)
+	}
+
+	_, err = tx.ExecContext(ctx, "UPDATE users SET is_active = FALSE WHERE id = $1", user.Id)
+	if err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("%s, %w", op, err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("%s, %w", op, err)
+	}
+
+	return nil
 }
