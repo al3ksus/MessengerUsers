@@ -8,6 +8,7 @@ var (
 	ErrUserAlreadyInactive = errors.New("user already inactive")
 )
 
-var (
+//Код ошибки PostgreSQL
+const (
 	CodeConstraintUnique = "unique_violation"
 )

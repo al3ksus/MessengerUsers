@@ -15,10 +15,13 @@ type App struct {
 }
 
 func New(log logger.Logger, gRPCPort int, db *sql.DB) *App {
+	//Репозиторий (DAO)
 	rep := psql.New(db)
 	crypter := &crypt.Crypter{}
 
+	//Сервис
 	users := users.New(log, rep, rep, crypter)
+	//обертка grpc сервера
 	grpcApp := grpcapp.New(log, gRPCPort, users)
 
 	return &App{

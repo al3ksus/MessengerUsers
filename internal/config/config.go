@@ -26,6 +26,8 @@ type PostgresConfig struct {
 	DBName   string `yaml:"dbname" env-required:"true"`
 }
 
+// MustLoad возвращает объект конфига, получая данные из файла конфигурации.
+// Вызывает панику в случае ошибки.
 func MustLoad() *Config {
 	configPath := fetchConfigPath()
 	if configPath == "" {
@@ -44,6 +46,7 @@ func MustLoad() *Config {
 	return &cfg
 }
 
+// fetchConfigPath возвращает путь к файлу конфигурации, полученный из флагов или переменной среды окружения.
 func fetchConfigPath() string {
 	var res string
 
@@ -57,6 +60,7 @@ func fetchConfigPath() string {
 	return res
 }
 
+// dotenvInit считывает файл .env и загружает переменные среды окружения, делая их достпными для использования.
 func dotenvInit() {
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")

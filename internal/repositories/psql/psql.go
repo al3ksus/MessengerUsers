@@ -11,10 +11,12 @@ import (
 	"github.com/lib/pq"
 )
 
+// Repository - объект репозитория
 type Repository struct {
 	db *sql.DB
 }
 
+// Connect создает подключение к базе данных PostgresSQL, принимает на вход строку подключения.
 func Connect(conn string) (*sql.DB, error) {
 	const op = "psql.New"
 
@@ -31,12 +33,15 @@ func Connect(conn string) (*sql.DB, error) {
 	return db, nil
 }
 
+// New возвращает новый объект *Repository
 func New(db *sql.DB) *Repository {
 	return &Repository{
 		db: db,
 	}
 }
 
+// SaveUser сохраняет нового пользователя в базу данных, возвращает id нового пользователя.
+// В случае нарушения constraint unique, возвращает ошибку repository.ErrUserAlredyExists.
 func (r *Repository) SaveUser(ctx context.Context, username string, password []byte) (int64, error) {
 	const op = "psql.SaveUser"
 
@@ -49,6 +54,7 @@ func (r *Repository) SaveUser(ctx context.Context, username string, password []b
 		) VALUES ($1, $2, true) RETURNING id`,
 		username, password)
 	if err := row.Scan(&id); err != nil {
+		//Ошибка нарушения constraint unique
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code.Name() == repository.CodeConstraintUnique {
 			return 0, fmt.Errorf("%s, %w", op, repository.ErrUserAlredyExists)
 		}
@@ -59,6 +65,7 @@ func (r *Repository) SaveUser(ctx context.Context, username string, password []b
 	return id, nil
 }
 
+// GetUser получает пользователя по username. Если пользователь не найден, возвращает ошибку repository.ErrUserNotFound.
 func (r *Repository) GetUser(ctx context.Context, username string) (models.User, error) {
 	const op = "psql.GetUser"
 
@@ -77,6 +84,9 @@ func (r *Repository) GetUser(ctx context.Context, username string) (models.User,
 	return user, nil
 }
 
+// SetInactive устанавливает пользователю с указанным id значение is_active = false.
+// Если пользователь с таким id не найден, возвращает ошибку repository.ErrUserNotFound.
+// Если пользователь уже неактивен, возвращает ошибку repository.ErrUserAlreadyInactive.
 func (r *Repository) SetInactive(ctx context.Context, userId int64) error {
 	const op = "psql.SetInactive"
 
