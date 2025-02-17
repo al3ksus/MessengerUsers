@@ -51,6 +51,8 @@ func main() {
 	logger.Info("app stopped")
 }
 
+// setupLogger получает объект zap.logger и возвращает zap.SugaredLogger.
+// Вызывыет панику в случае ошибки
 func setupLogger() *zap.SugaredLogger {
 	l, err := zap.NewDevelopment()
 	if err != nil {

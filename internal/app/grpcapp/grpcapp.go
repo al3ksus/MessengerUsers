@@ -10,12 +10,14 @@ import (
 	"google.golang.org/grpc"
 )
 
+// GRPCServer представляет собой grpc приложение.
 type GRPCServer struct {
 	log        logger.Logger
 	grpcServer *grpc.Server
 	port       int
 }
 
+// New - контсруктор для типа *GRPCServer.
 func New(log logger.Logger, port int, users usersgrpc.Users) *GRPCServer {
 	grpcServer := grpc.NewServer()
 	usersgrpc.Register(grpcServer, users)
@@ -26,6 +28,8 @@ func New(log logger.Logger, port int, users usersgrpc.Users) *GRPCServer {
 	}
 }
 
+// MustRun точно запускает gprc приложение.
+// Паникует в случае ошибки.
 func (a *GRPCServer) MustRun() {
 	err := a.Run()
 	if err != nil {
@@ -33,6 +37,7 @@ func (a *GRPCServer) MustRun() {
 	}
 }
 
+// Run создает tcp соединение по заданному порту.
 func (a *GRPCServer) Run() error {
 	const op = "grpcapp.Run"
 	a.log.Infof("starting grpc server")
@@ -51,6 +56,7 @@ func (a *GRPCServer) Run() error {
 	return nil
 }
 
+// Stop реализует безопасное завершение работы.
 func (a *GRPCServer) Stop() {
 	a.log.Infof("stopping grpc server")
 

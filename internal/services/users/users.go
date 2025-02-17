@@ -11,19 +11,45 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Users - объект сервиса, реализует логику работы с данными пользователя.
 type Users struct {
 	log          logger.Logger
 	userSaver    UserSaver
 	userProvider UserProvider
+	crypter      Crypter
 }
 
+// UserSaver предоставляет методы создания новых пользователей и изменения существующих.
+//
+//go:generate go run github.com/vektra/mockery/v2@v2.52.2 --name=UserSaver
 type UserSaver interface {
+	// SaveUser сохраняет нового пользователя в базу данных, возвращает id нового пользователя.
+	// В случае нарушения constraint unique, возвращает ошибку repository.ErrUserAlredyExists.
 	SaveUser(ctx context.Context, username string, password []byte) (int64, error)
+
+	// SetInactive устанавливает пользователю с указанным id значение is_active = false.
+	// Если пользователь с таким id не найден, возвращает ошибку repository.ErrUserNotFound.
+	// Если пользователь уже неактивен, возвращает ошибку repository.ErrUserAlreadyInactive.
 	SetInactive(ctx context.Context, userId int64) error
 }
 
+// UserProvider предоставляет методы получения пользователей.
+//
+//go:generate go run github.com/vektra/mockery/v2@v2.52.2 --name=UserProvider
 type UserProvider interface {
+	// GetUser получает пользователя по username. Если пользователь не найден, возвращает ошибку repository.ErrUserNotFound.
 	GetUser(ctx context.Context, username string) (models.User, error)
+}
+
+// Crypter - интерфейс для работы с хэшами.
+//
+//go:generate go run github.com/vektra/mockery/v2@v2.52.2 --name=Crypter
+type Crypter interface {
+	// GenerateFromPassword возвращает хэш указанного пароля с заданной стоимостью.
+	GenerateFromPassword(pass []byte, cost int) ([]byte, error)
+
+	// CompareHashAndPassword сравнивает захэшированный пароль с исходным.
+	CompareHashAndPassword(hashedPassword []byte, password []byte) error
 }
 
 var (
@@ -32,14 +58,18 @@ var (
 	ErrUserAlreadyInactive = errors.New("user already inactive")
 )
 
-func New(log logger.Logger, userSaver UserSaver, userProvider UserProvider) *Users {
+// New - конструктор для типа Users.
+func New(log logger.Logger, userSaver UserSaver, userProvider UserProvider, crypter Crypter) *Users {
 	return &Users{
 		log:          log,
 		userSaver:    userSaver,
 		userProvider: userProvider,
+		crypter:      crypter,
 	}
 }
 
+// Login реализует логику авторизации пользователя по логину и паролю.
+// Если логин или пароль неверные, возвращает users.ErrInvalidCredentials.
 func (u *Users) Login(ctx context.Context, username, password string) (int64, error) {
 	const op = "users.Login"
 
@@ -54,18 +84,20 @@ func (u *Users) Login(ctx context.Context, username, password string) (int64, er
 		return 0, fmt.Errorf("%s, %w", op, err)
 	}
 
-	if err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(password)); err != nil {
-		u.log.Errorf("invalid credentials. %w", err)
+	if err = u.crypter.CompareHashAndPassword(user.PasswordHash, []byte(password)); err != nil {
+		u.log.Warnf("invalid credentials. %w", err)
 		return 0, fmt.Errorf("%s, %w", op, ErrInvalidCredentials)
 	}
 
 	return user.Id, nil
 }
 
+// RegisterNewUser реализует логику регистрации нового пользователя.
+// Если заданный username уже занят, возвращает users.ErrUserAlreadyExists.
 func (u *Users) RegisterNewUser(ctx context.Context, username, password string) (int64, error) {
 	const op = "users.RegisterNewUser"
 
-	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	passHash, err := u.crypter.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		u.log.Errorf("error generating hash from password. %w", err)
 		return 0, fmt.Errorf("%s, %w", op, err)
@@ -74,7 +106,7 @@ func (u *Users) RegisterNewUser(ctx context.Context, username, password string) 
 	id, err := u.userSaver.SaveUser(ctx, username, passHash)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserAlredyExists) {
-			u.log.Errorf("user already exists. %w", err)
+			u.log.Warnf("user already exists. %w", err)
 			return 0, fmt.Errorf("%s, %w", op, ErrUserAlreadyExists)
 		}
 
@@ -85,6 +117,9 @@ func (u *Users) RegisterNewUser(ctx context.Context, username, password string) 
 	return id, nil
 }
 
+// MakeUserInactive реализует логику переведения пользователя в статус 'неактивен'.
+// Если пользователь с заданным userId не найден, возвращает users.ErrInvalidCredentials.
+// Если найденный пользователь уже имеет статус 'неактивен', возвращает ошибку repository.ErrUserAlreadyInactive.
 func (u *Users) MakeUserInactive(ctx context.Context, userId int64) error {
 	const op = "users.MakeUserInactive"
 
