@@ -16,6 +16,13 @@ type serverAPI struct {
 	users Users
 }
 
+var (
+	EmptyPassword       = ""
+	EmptyUsername       = ""
+	EmptyUserId   int64 = 0
+)
+
+//go:generate go run github.com/vektra/mockery/v2@v2.52.2 --name=Users
 type Users interface {
 	Login(ctx context.Context, username string, password string) (id int64, err error)
 	RegisterNewUser(ctx context.Context, username string, password string) (id int64, err error)
@@ -66,6 +73,10 @@ func (s *serverAPI) Register(ctx context.Context, in *messengerv1.RegisterReques
 }
 
 func (s *serverAPI) ToInactive(ctx context.Context, in *messengerv1.ToInactiveRequest) (*messengerv1.Empty, error) {
+	if err := validateId(in.UserId); err != nil {
+		return nil, err
+	}
+
 	if err := s.users.MakeUserInactive(ctx, in.GetUserId()); err != nil {
 		if errors.Is(err, users.ErrInvalidCredentials) {
 			return nil, status.Error(codes.InvalidArgument, "user not found")
@@ -81,12 +92,20 @@ func (s *serverAPI) ToInactive(ctx context.Context, in *messengerv1.ToInactiveRe
 }
 
 func validate(password, username string) error {
-	if password == "" {
+	if username == EmptyUsername {
+		return status.Error(codes.InvalidArgument, "username is required")
+	}
+
+	if password == EmptyPassword {
 		return status.Error(codes.InvalidArgument, "password is required")
 	}
 
-	if username == "" {
-		return status.Error(codes.InvalidArgument, "username is required")
+	return nil
+}
+
+func validateId(userId int64) error {
+	if userId == EmptyUserId {
+		return status.Error(codes.InvalidArgument, "user_id is required")
 	}
 
 	return nil

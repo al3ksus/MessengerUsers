@@ -85,11 +85,12 @@ func (r *Repository) SetInactive(ctx context.Context, userId int64) error {
 		return fmt.Errorf("%s, %w", op, err)
 	}
 
-	row := tx.QueryRowContext(ctx, "SELECT * FROM users WHERE id = $1", userId)
+	row := tx.QueryRowContext(ctx, "SELECT is_active FROM users WHERE id = $1", userId)
 
-	var user models.User
-	err = row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.IsActive)
+	var isActive bool
+	err = row.Scan(&isActive)
 	if err != nil {
+		_ = tx.Rollback()
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%s, %w", op, repository.ErrUserNotFound)
 		}
@@ -97,11 +98,11 @@ func (r *Repository) SetInactive(ctx context.Context, userId int64) error {
 		return fmt.Errorf("%s, %w", op, err)
 	}
 
-	if !user.IsActive {
+	if !isActive {
 		return fmt.Errorf("%s, %w", op, repository.ErrUserAlreadyInactive)
 	}
 
-	_, err = tx.ExecContext(ctx, "UPDATE users SET is_active = FALSE WHERE id = $1", user.Id)
+	_, err = tx.ExecContext(ctx, "UPDATE users SET is_active = FALSE WHERE id = $1", userId)
 	if err != nil {
 		_ = tx.Rollback()
 		return fmt.Errorf("%s, %w", op, err)

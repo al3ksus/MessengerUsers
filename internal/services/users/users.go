@@ -15,15 +15,24 @@ type Users struct {
 	log          logger.Logger
 	userSaver    UserSaver
 	userProvider UserProvider
+	crypter      Crypter
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.52.2 --name=UserSaver
 type UserSaver interface {
 	SaveUser(ctx context.Context, username string, password []byte) (int64, error)
 	SetInactive(ctx context.Context, userId int64) error
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.52.2 --name=UserProvider
 type UserProvider interface {
 	GetUser(ctx context.Context, username string) (models.User, error)
+}
+
+//go:generate go run github.com/vektra/mockery/v2@v2.52.2 --name=Crypter
+type Crypter interface {
+	GenerateFromPassword(pass []byte, cost int) ([]byte, error)
+	CompareHashAndPassword(hashedPassword []byte, password []byte) error
 }
 
 var (
@@ -32,11 +41,12 @@ var (
 	ErrUserAlreadyInactive = errors.New("user already inactive")
 )
 
-func New(log logger.Logger, userSaver UserSaver, userProvider UserProvider) *Users {
+func New(log logger.Logger, userSaver UserSaver, userProvider UserProvider, crypter Crypter) *Users {
 	return &Users{
 		log:          log,
 		userSaver:    userSaver,
 		userProvider: userProvider,
+		crypter:      crypter,
 	}
 }
 
@@ -54,8 +64,8 @@ func (u *Users) Login(ctx context.Context, username, password string) (int64, er
 		return 0, fmt.Errorf("%s, %w", op, err)
 	}
 
-	if err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(password)); err != nil {
-		u.log.Errorf("invalid credentials. %w", err)
+	if err = u.crypter.CompareHashAndPassword(user.PasswordHash, []byte(password)); err != nil {
+		u.log.Warnf("invalid credentials. %w", err)
 		return 0, fmt.Errorf("%s, %w", op, ErrInvalidCredentials)
 	}
 
@@ -65,7 +75,7 @@ func (u *Users) Login(ctx context.Context, username, password string) (int64, er
 func (u *Users) RegisterNewUser(ctx context.Context, username, password string) (int64, error) {
 	const op = "users.RegisterNewUser"
 
-	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	passHash, err := u.crypter.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		u.log.Errorf("error generating hash from password. %w", err)
 		return 0, fmt.Errorf("%s, %w", op, err)
@@ -74,7 +84,7 @@ func (u *Users) RegisterNewUser(ctx context.Context, username, password string) 
 	id, err := u.userSaver.SaveUser(ctx, username, passHash)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserAlredyExists) {
-			u.log.Errorf("user already exists. %w", err)
+			u.log.Warnf("user already exists. %w", err)
 			return 0, fmt.Errorf("%s, %w", op, ErrUserAlreadyExists)
 		}
 
