@@ -1,0 +1,10 @@
+#Config
+config
+
+#Exe file
+main.exe
+
+#Env file
+.env
+
+h
