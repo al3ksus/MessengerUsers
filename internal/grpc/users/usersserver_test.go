@@ -34,6 +34,8 @@ var (
 	TestErrUserNotFound       = status.Error(codes.InvalidArgument, "user not found")
 )
 
+//TODO: переделать тесты
+
 func Test_serverAPI_Login(t *testing.T) {
 	type mockBehavior func(s *mocks.Users, ctx context.Context, in *messengerv1.LoginRequest)
 	type args struct {
@@ -121,7 +123,7 @@ func Test_serverAPI_Login(t *testing.T) {
 			users := mocks.NewUsers(t)
 
 			tt.mockBehavior(users, tt.args.ctx, tt.args.in)
-			s := &serverAPI{
+			s := &UsersServerAPI{
 				users: users,
 			}
 			got, err := s.Login(tt.args.ctx, tt.args.in)
@@ -218,7 +220,7 @@ func Test_serverAPI_Register(t *testing.T) {
 			users := mocks.NewUsers(t)
 
 			tt.mockBehavior(users, tt.args.ctx, tt.args.in)
-			s := &serverAPI{
+			s := &UsersServerAPI{
 				users: users,
 			}
 			got, err := s.Register(tt.args.ctx, tt.args.in)
@@ -238,7 +240,7 @@ func Test_serverAPI_ToInactive(t *testing.T) {
 		name         string
 		args         args
 		mockBehavior mockBehavior
-		want         *messengerv1.Empty
+		want         *messengerv1.ToInactiveResponse
 		wantErr      error
 	}{
 		{
@@ -291,7 +293,7 @@ func Test_serverAPI_ToInactive(t *testing.T) {
 			mockBehavior: func(users *mocks.Users, ctx context.Context, in *messengerv1.ToInactiveRequest) {
 				users.On("MakeUserInactive", ctx, in.UserId).Return(nil)
 			},
-			want: &messengerv1.Empty{},
+			want: &messengerv1.ToInactiveResponse{},
 		},
 		{
 			name: "EmptyId",
@@ -310,7 +312,7 @@ func Test_serverAPI_ToInactive(t *testing.T) {
 			users := mocks.NewUsers(t)
 
 			tt.mockBehavior(users, tt.args.ctx, tt.args.in)
-			s := &serverAPI{
+			s := &UsersServerAPI{
 				users: users,
 			}
 			got, err := s.ToInactive(tt.args.ctx, tt.args.in)

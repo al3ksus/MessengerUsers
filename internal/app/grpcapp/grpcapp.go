@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	friendrequestsgrpc "github.com/al3ksus/messengerusers/internal/grpc/friendrequests"
 	usersgrpc "github.com/al3ksus/messengerusers/internal/grpc/users"
 	"github.com/al3ksus/messengerusers/internal/logger"
 
@@ -18,9 +19,10 @@ type GRPCServer struct {
 }
 
 // New - контсруктор для типа *GRPCServer.
-func New(log logger.Logger, port int, users usersgrpc.Users) *GRPCServer {
+func New(log logger.Logger, port int, users usersgrpc.Users, friendRequests friendrequestsgrpc.FriendRequests) *GRPCServer {
 	grpcServer := grpc.NewServer()
 	usersgrpc.Register(grpcServer, users)
+	friendrequestsgrpc.Register(grpcServer, friendRequests)
 	return &GRPCServer{
 		log:        log,
 		grpcServer: grpcServer,

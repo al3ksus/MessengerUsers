@@ -12,7 +12,7 @@ import (
 )
 
 // serverAPI реализует хэндлеры
-type serverAPI struct {
+type UsersServerAPI struct {
 	messengerv1.UnimplementedUsersServer
 	users Users
 }
@@ -43,12 +43,12 @@ type Users interface {
 
 // Register регистрирует grpc сервер
 func Register(gRPCServer *grpc.Server, users Users) {
-	messengerv1.RegisterUsersServer(gRPCServer, &serverAPI{users: users})
+	messengerv1.RegisterUsersServer(gRPCServer, &UsersServerAPI{users: users})
 }
 
 // Хэндлер Login отвечает за авторизацию пользователей по логину и паролю.
 // Если логин или пароль неверные, возвращает ошибку InvalidArguments.
-func (s *serverAPI) Login(ctx context.Context, in *messengerv1.LoginRequest) (*messengerv1.LoginResponse, error) {
+func (s *UsersServerAPI) Login(ctx context.Context, in *messengerv1.LoginRequest) (*messengerv1.LoginResponse, error) {
 	if err := validate(in.Password, in.Username); err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (s *serverAPI) Login(ctx context.Context, in *messengerv1.LoginRequest) (*m
 
 // Хэндлер Register отвечает за регистрацию новых пользователей.
 // Если логин уже занят, возвращает ошибку AlreadyExists.
-func (s *serverAPI) Register(ctx context.Context, in *messengerv1.RegisterRequest) (*messengerv1.RegisterResponse, error) {
+func (s *UsersServerAPI) Register(ctx context.Context, in *messengerv1.RegisterRequest) (*messengerv1.RegisterResponse, error) {
 	if err := validate(in.Password, in.Username); err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (s *serverAPI) Register(ctx context.Context, in *messengerv1.RegisterReques
 // Хэндлер ToInactive отвечает за перевод пользователей в состояние 'неаткивен'.
 // Если пользователь не найден, возвращает ошибку InvalidArgument.
 // Если пользователь уже неактивен, возвращает ошибку AlreadyExists.
-func (s *serverAPI) ToInactive(ctx context.Context, in *messengerv1.ToInactiveRequest) (*messengerv1.Empty, error) {
+func (s *UsersServerAPI) ToInactive(ctx context.Context, in *messengerv1.ToInactiveRequest) (*messengerv1.ToInactiveResponse, error) {
 	if err := validateId(in.UserId); err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (s *serverAPI) ToInactive(ctx context.Context, in *messengerv1.ToInactiveRe
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
-	return &messengerv1.Empty{}, nil
+	return &messengerv1.ToInactiveResponse{}, nil
 }
 
 // validate валидирует пароль и логин.

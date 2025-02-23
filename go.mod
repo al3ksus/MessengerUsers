@@ -3,7 +3,7 @@ module github.com/al3ksus/messengerusers
 go 1.23.5
 
 require (
-	github.com/al3ksus/messengerprotos v0.0.0-20250215204138-c9bc8b13f07e
+	github.com/al3ksus/messengerprotos v0.0.0-20250223111647-63b22a596944
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9

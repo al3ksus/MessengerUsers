@@ -9,7 +9,7 @@ import (
 	"github.com/al3ksus/messengerusers/internal/domain/models"
 	"github.com/al3ksus/messengerusers/internal/lib/crypt"
 	loggermocks "github.com/al3ksus/messengerusers/internal/logger/mocks"
-	repository "github.com/al3ksus/messengerusers/internal/repositories"
+	userspsql "github.com/al3ksus/messengerusers/internal/repositories/psql/users"
 	"github.com/al3ksus/messengerusers/internal/services/users/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -99,7 +99,7 @@ func TestUsers_Login(t *testing.T) {
 				username string,
 				password string,
 			) {
-				userProvider.On("GetUser", ctx, username).Return(EmptyUser, repository.ErrUserNotFound)
+				userProvider.On("GetUser", ctx, username).Return(EmptyUser, userspsql.ErrUserNotFound)
 				log.On("Warnf", mock.Anything, mock.Anything)
 			},
 			wantErr: ErrInvalidCredentials,
@@ -236,7 +236,7 @@ func TestUsers_RegisterNewUser(t *testing.T) {
 				password string,
 			) {
 				crypter.On("GenerateFromPassword", []byte(TestPass), bcrypt.DefaultCost).Return(TestPassHash, nil)
-				userSaver.On("SaveUser", ctx, username, TestPassHash).Return(EmptyUserId, repository.ErrUserAlredyExists)
+				userSaver.On("SaveUser", ctx, username, TestPassHash).Return(EmptyUserId, userspsql.ErrUserAlredyExists)
 				log.On("Warnf", mock.Anything, mock.Anything)
 			},
 			wantErr: ErrUserAlreadyExists,
@@ -368,7 +368,7 @@ func TestUsers_MakeUserInactive(t *testing.T) {
 				ctx context.Context,
 				userId int64,
 			) {
-				userSaver.On("SetInactive", ctx, userId).Return(repository.ErrUserNotFound)
+				userSaver.On("SetInactive", ctx, userId).Return(userspsql.ErrUserNotFound)
 				log.On("Warnf", mock.Anything, mock.Anything)
 			},
 			wantErr: ErrInvalidCredentials,
@@ -387,7 +387,7 @@ func TestUsers_MakeUserInactive(t *testing.T) {
 				ctx context.Context,
 				userId int64,
 			) {
-				userSaver.On("SetInactive", ctx, userId).Return(repository.ErrUserAlreadyInactive)
+				userSaver.On("SetInactive", ctx, userId).Return(userspsql.ErrUserAlreadyInactive)
 				log.On("Warnf", mock.Anything, mock.Anything)
 			},
 			wantErr: ErrUserAlreadyInactive,

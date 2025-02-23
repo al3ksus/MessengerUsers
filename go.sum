@@ -8,6 +8,12 @@ github.com/al3ksus/messengerprotos v0.0.0-20250215194847-41db12d3d7d5 h1:TDP7tgx
 github.com/al3ksus/messengerprotos v0.0.0-20250215194847-41db12d3d7d5/go.mod h1:rOxIYerS2AKM37kbKyELcIiriAh4F395AXZ2Vrl1Sm8=
 github.com/al3ksus/messengerprotos v0.0.0-20250215204138-c9bc8b13f07e h1:0NPez3h9uSln5kmJMU5c7kW7pt0ESyA8yRoTlOpMnwE=
 github.com/al3ksus/messengerprotos v0.0.0-20250215204138-c9bc8b13f07e/go.mod h1:rOxIYerS2AKM37kbKyELcIiriAh4F395AXZ2Vrl1Sm8=
+github.com/al3ksus/messengerprotos v0.0.0-20250218202350-1daba4d5334c h1:ALvspNL11iwQ5/XYQG4b6HIIUgY2pcuwF/HKkOz43Y8=
+github.com/al3ksus/messengerprotos v0.0.0-20250218202350-1daba4d5334c/go.mod h1:rOxIYerS2AKM37kbKyELcIiriAh4F395AXZ2Vrl1Sm8=
+github.com/al3ksus/messengerprotos v0.0.0-20250222181232-97099887e6ec h1:lZ8h3hoEKbBAAz9spARAXlprAehQ/YUzaYLNxNBnOpQ=
+github.com/al3ksus/messengerprotos v0.0.0-20250222181232-97099887e6ec/go.mod h1:rOxIYerS2AKM37kbKyELcIiriAh4F395AXZ2Vrl1Sm8=
+github.com/al3ksus/messengerprotos v0.0.0-20250223111647-63b22a596944 h1:F97+yaG3Uu88bmPshGzrpcr0tezdaE59Y5WrLLwVX2k=
+github.com/al3ksus/messengerprotos v0.0.0-20250223111647-63b22a596944/go.mod h1:rOxIYerS2AKM37kbKyELcIiriAh4F395AXZ2Vrl1Sm8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

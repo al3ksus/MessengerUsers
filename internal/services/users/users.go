@@ -7,7 +7,7 @@ import (
 
 	"github.com/al3ksus/messengerusers/internal/domain/models"
 	"github.com/al3ksus/messengerusers/internal/logger"
-	repository "github.com/al3ksus/messengerusers/internal/repositories"
+	userspsql "github.com/al3ksus/messengerusers/internal/repositories/psql/users"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -59,7 +59,7 @@ var (
 )
 
 // New - конструктор для типа Users.
-func New(log logger.Logger, userSaver UserSaver, userProvider UserProvider, crypter Crypter) *Users {
+func NewUsers(log logger.Logger, userSaver UserSaver, userProvider UserProvider, crypter Crypter) *Users {
 	return &Users{
 		log:          log,
 		userSaver:    userSaver,
@@ -75,7 +75,7 @@ func (u *Users) Login(ctx context.Context, username, password string) (int64, er
 
 	user, err := u.userProvider.GetUser(ctx, username)
 	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+		if errors.Is(err, userspsql.ErrUserNotFound) {
 			u.log.Warnf("user not found. %w", err)
 			return 0, fmt.Errorf("%s, %w", op, ErrInvalidCredentials)
 		}
@@ -105,7 +105,7 @@ func (u *Users) RegisterNewUser(ctx context.Context, username, password string) 
 
 	id, err := u.userSaver.SaveUser(ctx, username, passHash)
 	if err != nil {
-		if errors.Is(err, repository.ErrUserAlredyExists) {
+		if errors.Is(err, userspsql.ErrUserAlredyExists) {
 			u.log.Warnf("user already exists. %w", err)
 			return 0, fmt.Errorf("%s, %w", op, ErrUserAlreadyExists)
 		}
@@ -124,11 +124,11 @@ func (u *Users) MakeUserInactive(ctx context.Context, userId int64) error {
 	const op = "users.MakeUserInactive"
 
 	if err := u.userSaver.SetInactive(ctx, userId); err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+		if errors.Is(err, userspsql.ErrUserNotFound) {
 			u.log.Warnf("user not found. %w", err)
 			return fmt.Errorf("%s, %w", op, ErrInvalidCredentials)
 		}
-		if errors.Is(err, repository.ErrUserAlreadyInactive) {
+		if errors.Is(err, userspsql.ErrUserAlreadyInactive) {
 			u.log.Warnf("user already inactive. %w", err)
 			return fmt.Errorf("%s, %w", op, ErrUserAlreadyInactive)
 		}

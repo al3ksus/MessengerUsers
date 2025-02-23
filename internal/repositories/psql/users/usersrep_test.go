@@ -1,4 +1,4 @@
-package psql
+package userspsql
 
 import (
 	"context"
@@ -31,7 +31,7 @@ func TestRepository_SaveUser(t *testing.T) {
 	}
 	defer db.Close()
 
-	rep := New(db)
+	rep := NewUsersRepository(db)
 
 	type args struct {
 		ctx      context.Context
@@ -96,7 +96,7 @@ func TestRepository_GetUser(t *testing.T) {
 	}
 	defer db.Close()
 
-	rep := New(db)
+	rep := NewUsersRepository(db)
 
 	type args struct {
 		ctx      context.Context
@@ -160,7 +160,7 @@ func TestRepository_SetInactive(t *testing.T) {
 	}
 	defer db.Close()
 
-	rep := New(db)
+	rep := NewUsersRepository(db)
 
 	type args struct {
 		ctx    context.Context
