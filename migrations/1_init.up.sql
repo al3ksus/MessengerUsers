@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS users
 (
     id BIGSERIAL PRIMARY KEY,
-    username TEXT NOT NULL UNIQUE,
+    username VARCHAR(50) NOT NULL UNIQUE,
     pass_hash BYTEA NOT NULL,
     is_active BOOLEAN DEFAULT TRUE
 );
